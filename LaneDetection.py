@@ -5,21 +5,88 @@ import numpy as np
 vidcap = cv2.VideoCapture("test_two.mp4")
 success, image = vidcap.read()
 
+def detection_direction(lines, image):
+    contador_izquierda = 0
+    contador_derecha = 0
+    if lines is not None:
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            pendiente = (y2 - y1) / (x2 - x1) if (x2 - x1) != 0 else float('inf')
+            if pendiente < 0:
+                contador_izquierda += 1
+                cv2.line(image, (x1, y1), (x2, y2), (255, 0, 0), 5)  # Azul para líneas hacia la izquierda
+            elif pendiente > 0:
+                contador_derecha += 1
+                cv2.line(image, (x1, y1), (x2, y2), (0, 0, 255), 5)  # Rojo para líneas hacia la derecha
+    if contador_izquierda > contador_derecha:
+        print(f"gire a la izquierda - {contador_izquierda}")
+    elif contador_derecha > contador_izquierda:
+        print(f"gire a la derecha - {contador_derecha}")
+    else:
+        print(f"siga derecho - {contador_izquierda} - {contador_derecha}")
+
 def nothing(x):
     pass
 
 cv2.namedWindow("Trackbars")
+cv2.namedWindow("Trackbars")
+cv2.createTrackbar("Threshold", "Trackbars", 50, 200, nothing)
+cv2.createTrackbar("Min Line Length", "Trackbars", 40, 100, nothing)
+cv2.createTrackbar("Max Line Gap", "Trackbars", 20, 100, nothing)
 
-cv2.createTrackbar("L - H", "Trackbars", 0, 255, nothing)
-cv2.createTrackbar("L - S", "Trackbars", 0, 255, nothing)
-cv2.createTrackbar("L - V", "Trackbars", 200, 255, nothing)
-cv2.createTrackbar("U - H", "Trackbars", 255, 255, nothing)
-cv2.createTrackbar("U - S", "Trackbars", 50, 255, nothing)
-cv2.createTrackbar("U - V", "Trackbars", 255, 255, nothing)
+
+# cv2.createTrackbar("L - H", "Trackbars", 0, 255, nothing)
+# cv2.createTrackbar("L - S", "Trackbars", 0, 255, nothing)
+# cv2.createTrackbar("L - V", "Trackbars", 200, 255, nothing)
+# cv2.createTrackbar("U - H", "Trackbars", 255, 255, nothing)
+# cv2.createTrackbar("U - S", "Trackbars", 50, 255, nothing)
+# cv2.createTrackbar("U - V", "Trackbars", 255, 255, nothing)
 
 while success:
     success, image = vidcap.read()
     frame = cv2.resize(image, (640,480))
+
+    # TEST ****************************************************
+    # detection of lanes to courve the road
+    blurred_frame = cv2.GaussianBlur(image, (5, 5), 0)
+
+    edges = cv2.Canny(blurred_frame, 50, 150)
+
+
+    threshold = cv2.getTrackbarPos("Threshold", "Trackbars")
+    minLineLength = cv2.getTrackbarPos("Min Line Length", "Trackbars")
+    maxLineGap = cv2.getTrackbarPos("Max Line Gap", "Trackbars")
+
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold, minLineLength=minLineLength, maxLineGap=maxLineGap)
+
+    # lines = cv2.HoughLinesP(edges, 1, np.pi/180, 50, maxLineGap=50)
+
+
+    detection_direction(lines, image)
+
+    # contador_izquierda = 0
+    # contador_derecha = 0
+
+    # if lines is not None:
+    #     for line in lines:
+    #         x1, y1, x2, y2 = line[0]
+    #         pendiente = (y2 - y1) / (x2 - x1) if (x2 - x1) != 0 else float('inf')
+    #         if pendiente < 0:
+    #             contador_izquierda += 1
+    #             cv2.line(image, (x1, y1), (x2, y2), (255, 0, 0), 5)  # Azul para líneas hacia la izquierda
+    #         elif pendiente > 0:
+    #             contador_derecha += 1
+    #             cv2.line(image, (x1, y1), (x2, y2), (0, 0, 255), 5)  # Rojo para líneas hacia la derecha
+
+    # if contador_izquierda > 0:
+    #     print("gire a la izquierda")
+    # elif contador_derecha < 0:
+    #     print("gire a la derecha")
+    # else:
+    #     print("siga derecho")
+    
+    # END TEST ****************************************************
+
 
     ## Choosing points for perspective transformation
     tl = (222,387)
@@ -96,9 +163,9 @@ while success:
         y -= 40
         
     cv2.imshow("Original", frame)
-    cv2.imshow("Bird's Eye View", transformed_frame)
-    cv2.imshow("Lane Detection - Image Thresholding", mask)
-    cv2.imshow("Lane Detection - Sliding Windows", msk)
+    # cv2.imshow("Bird's Eye View", transformed_frame)
+    # cv2.imshow("Lane Detection - Image Thresholding", mask)
+    # cv2.imshow("Lane Detection - Sliding Windows", msk)
 
     if cv2.waitKey(10) == 27:
         break
