@@ -1,9 +1,11 @@
 import cv2
+import os
 import numpy as np
 
-# vidcap = cv2.VideoCapture("LaneVideo.mp4")
-vidcap = cv2.VideoCapture("test_two.mp4")
+path_video = "./assets/videos/test_two.mp4"
+vidcap = cv2.VideoCapture(path_video)
 success, image = vidcap.read()
+print("RUNNING...")
 
 def detection_direction(lines, image):
     contador_izquierda = 0
@@ -24,6 +26,7 @@ def detection_direction(lines, image):
         print(f"gire a la derecha - {contador_derecha}")
     else:
         print(f"siga derecho - {contador_izquierda} - {contador_derecha}")
+
 
 def nothing(x):
     pass
@@ -46,12 +49,10 @@ while success:
     success, image = vidcap.read()
     frame = cv2.resize(image, (640,480))
 
-    # TEST ****************************************************
     # detection of lanes to courve the road
     blurred_frame = cv2.GaussianBlur(image, (5, 5), 0)
 
     edges = cv2.Canny(blurred_frame, 50, 150)
-
 
     threshold = cv2.getTrackbarPos("Threshold", "Trackbars")
     minLineLength = cv2.getTrackbarPos("Min Line Length", "Trackbars")
@@ -59,33 +60,7 @@ while success:
 
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold, minLineLength=minLineLength, maxLineGap=maxLineGap)
 
-    # lines = cv2.HoughLinesP(edges, 1, np.pi/180, 50, maxLineGap=50)
-
-
     detection_direction(lines, image)
-
-    # contador_izquierda = 0
-    # contador_derecha = 0
-
-    # if lines is not None:
-    #     for line in lines:
-    #         x1, y1, x2, y2 = line[0]
-    #         pendiente = (y2 - y1) / (x2 - x1) if (x2 - x1) != 0 else float('inf')
-    #         if pendiente < 0:
-    #             contador_izquierda += 1
-    #             cv2.line(image, (x1, y1), (x2, y2), (255, 0, 0), 5)  # Azul para líneas hacia la izquierda
-    #         elif pendiente > 0:
-    #             contador_derecha += 1
-    #             cv2.line(image, (x1, y1), (x2, y2), (0, 0, 255), 5)  # Rojo para líneas hacia la derecha
-
-    # if contador_izquierda > 0:
-    #     print("gire a la izquierda")
-    # elif contador_derecha < 0:
-    #     print("gire a la derecha")
-    # else:
-    #     print("siga derecho")
-    
-    # END TEST ****************************************************
 
 
     ## Choosing points for perspective transformation
